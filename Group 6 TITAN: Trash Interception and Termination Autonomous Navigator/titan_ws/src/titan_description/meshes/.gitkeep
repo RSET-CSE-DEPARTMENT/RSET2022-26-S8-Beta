@@ -1,0 +1,1 @@
+# This file forces Git to track the empty meshes directory, preventing CMake from crashing during build.

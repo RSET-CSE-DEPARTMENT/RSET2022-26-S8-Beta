@@ -10,32 +10,32 @@ slam_toolbox:
 
     # --- CRITICAL TUNING FOR PI 5 & SERIAL ODOM ---
     mode: mapping
-    scan_buffer_size: 200         
-    scan_buffer_maximum_scan_distance: 10.0
-    max_laser_range: 8.0
+    scan_buffer_size: 50
+    max_laser_range: 12.0
     
     # Timing and Matching
     resolution: 0.05
     transform_publish_period: 0.02
-    transform_timeout: 0.2
+    transform_timeout: 0.5
+    lookup_transform_timeout: 0.1
     tf_buffer_duration: 30.0
     minimum_time_interval: 0.1
     
     # Motion Parameters
-    minimum_travel_distance: 0.1
+    minimum_travel_distance: 0.05
     minimum_travel_heading: 0.05
     
     # Matcher Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    link_match_minimum_response_fine: 0.08
+    link_match_minimum_response_fine: 0.1
     link_scan_maximum_distance: 12.0
     
     # Loop Closure
     do_loop_closing: true
     loop_search_maximum_distance: 5.0
-    loop_match_minimum_chain_size: 10
-    loop_match_minimum_response_fine: 0.5
+    loop_match_minimum_chain_size: 6
+    loop_match_minimum_response_fine: 0.4
     
     # Map Update
     map_update_interval: 2.0

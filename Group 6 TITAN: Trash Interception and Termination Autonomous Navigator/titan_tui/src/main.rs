@@ -42,8 +42,7 @@ enum MenuItem {
     // Robot Local
     Bringup,
     LocalTeleop,
-    Mapping,
-    Cartographer,
+    SlamToolbox,
     Navigation,
     Waypoints,
     SaveMap,
@@ -53,6 +52,7 @@ enum MenuItem {
     Rebuild,
     ConnectWiFi,
     KillAll,
+    StartGui,
     // Laptop Remote (Instructions)
     RemoteTeleop,
     RemoteRViz,
@@ -62,8 +62,7 @@ impl MenuItem {
         match self {
             MenuItem::Bringup => "[Robot] START BRINGUP".to_string(),
             MenuItem::LocalTeleop => "[Robot] LOCAL TELEOP (TMUX)".to_string(),
-            MenuItem::Mapping => "[Robot] START MAPPING (SLAM TOOLBOX)".to_string(),
-            MenuItem::Cartographer => "[Robot] START MAPPING (CARTOGRAPHER)".to_string(),
+            MenuItem::SlamToolbox => "[Robot] START MAPPING (SLAM TOOLBOX)".to_string(),
             MenuItem::Navigation => "[Robot] START NAV2".to_string(),
             MenuItem::Waypoints => "[Robot] WAYPOINTS / NAV ".to_string(),
             MenuItem::SaveMap => "[Robot] SAVE MAP".to_string(),
@@ -72,6 +71,7 @@ impl MenuItem {
             MenuItem::Rebuild => "[Sys] REBUILD WORKSPACE".to_string(),
             MenuItem::ConnectWiFi => "[Sys] CONNECT WIFI (USB)".to_string(),
             MenuItem::KillAll => "[Sys] KILL ALL ROS2 PROC".to_string(),
+            MenuItem::StartGui => "[Sys] START WEB GUI (VITE)".to_string(),
             MenuItem::RemoteTeleop => "[Laptop] REMOTE TELEOP".to_string(),
             MenuItem::RemoteRViz => "[Laptop] REMOTE RVIZ".to_string(),
         }
@@ -174,8 +174,7 @@ impl App {
             all_menu_items: vec![
                 MenuItem::Bringup,
                 MenuItem::LocalTeleop,
-                MenuItem::Mapping,
-                MenuItem::Cartographer,
+                MenuItem::SlamToolbox,
                 MenuItem::Navigation,
                 MenuItem::Waypoints,
                 MenuItem::SaveMap,
@@ -184,6 +183,7 @@ impl App {
                 MenuItem::Rebuild,
                 MenuItem::ConnectWiFi,
                 MenuItem::KillAll,
+                MenuItem::StartGui,
                 MenuItem::RemoteTeleop,
                 MenuItem::RemoteRViz,
             ],
@@ -225,7 +225,7 @@ impl App {
 
     fn load_waypoints(&mut self) {
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-        let path = format!("{}/titan_ws/src/titan_bringup/config/waypoints.yaml", home);
+        let path = format!("{}/Project-TITAN/titan_ws/src/titan_bringup/config/waypoints.yaml", home);
         if let Ok(content) = fs::read_to_string(&path) {
             match serde_yaml::from_str::<WaypointFile>(&content) {
                 Ok(data) => {
@@ -243,7 +243,7 @@ impl App {
 
     fn save_waypoints(&mut self) {
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-        let path = format!("{}/titan_ws/src/titan_bringup/config/waypoints.yaml", home);
+        let path = format!("{}/Project-TITAN/titan_ws/src/titan_bringup/config/waypoints.yaml", home);
         let data = WaypointFile { waypoints: self.waypoints.clone() };
         match serde_yaml::to_string(&data) {
             Ok(content) => {
@@ -264,7 +264,7 @@ impl App {
             match (self.device_type, item) {
                 (DeviceType::Titan, MenuItem::RemoteTeleop) | (DeviceType::Titan, MenuItem::RemoteRViz) => false,
                 (DeviceType::Laptop, MenuItem::Bringup) | (DeviceType::Laptop, MenuItem::LocalTeleop) | 
-                (DeviceType::Laptop, MenuItem::Mapping) | (DeviceType::Laptop, MenuItem::Cartographer) | (DeviceType::Laptop, MenuItem::Navigation) |
+                (DeviceType::Laptop, MenuItem::SlamToolbox) | (DeviceType::Laptop, MenuItem::Navigation) |
                 (DeviceType::Laptop, MenuItem::Waypoints) |
                 (DeviceType::Laptop, MenuItem::SaveMap) | (DeviceType::Laptop, MenuItem::CheckUSB) |
                 (DeviceType::Laptop, MenuItem::Battery) | (DeviceType::Laptop, MenuItem::Rebuild) |
@@ -275,13 +275,18 @@ impl App {
     }
 
     fn run_diagnostics(&mut self) {
-        self.startup_checks.push("Checking Power System...".to_string());
-        self.startup_checks.push(format!("  -> {}", self.get_battery_readable()));
-        
-        self.startup_checks.push("Scanning Serial Bus...".to_string());
-        let usb = self.get_usb_readable();
-        for line in usb {
-            self.startup_checks.push(format!("  -> {}", line));
+        if self.device_type == DeviceType::Titan {
+            self.startup_checks.push("Checking Power System...".to_string());
+            self.startup_checks.push(format!("  -> {}", self.get_battery_readable()));
+            
+            self.startup_checks.push("Scanning Serial Bus...".to_string());
+            let usb = self.get_usb_readable();
+            for line in usb {
+                self.startup_checks.push(format!("  -> {}", line));
+            }
+        } else {
+            self.startup_checks.push("Laptop Mode Detected".to_string());
+            self.startup_checks.push("  -> Skipping hardware bus scanning".to_string());
         }
         
         self.startup_checks.push("ROS 2 Context... OK".to_string());
@@ -326,7 +331,7 @@ impl App {
     fn update_maps_list(&mut self) {
         self.available_maps.clear();
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-        let maps_path = format!("{}/titan_ws/src/titan_bringup/maps/", home);
+        let maps_path = format!("{}/Project-TITAN/titan_ws/src/titan_bringup/maps/", home);
         if let Ok(entries) = std::fs::read_dir(maps_path) {
             for entry in entries.flatten() {
                 let path = entry.path();
@@ -344,7 +349,7 @@ impl App {
     fn update_rviz_configs_list(&mut self) {
         self.available_rviz_configs.clear();
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-        let config_path = format!("{}/titan_ws/src/titan_bringup/rviz_config/", home);
+        let config_path = format!("{}/Project-TITAN/titan_ws/src/titan_bringup/rviz_config/", home);
         if let Ok(entries) = std::fs::read_dir(config_path) {
             for entry in entries.flatten() {
                 let path = entry.path();
@@ -470,17 +475,43 @@ impl App {
                 }
             }
         }
+
+        // Automatic dismissal of Nav2 Loading Screen
+        if self.is_loading && self.operation_status == "NAVIGATION" {
+             // Check roughly every 2 seconds to avoid CPU spiking
+             if self.spinner_frame % 20 == 0 {
+                let output = Command::new("ros2")
+                    .args(["node", "list"])
+                    .output();
+                
+                if let Ok(out) = output {
+                    let s = String::from_utf8_lossy(&out.stdout);
+                    if s.contains("planner_server") || s.contains("controller_server") {
+                        self.is_loading = false;
+                        self.logs.push("Navigation System: ONLINE & READY".to_string());
+                    }
+                }
+             }
+        }
     }
 
     fn translate_log(&self, msg: &str) -> String {
+        // Filter out Lidar CRC errors and common jargon
+        if msg.contains("Check Sum") || msg.contains("wait_for_service") || msg.contains("lifecycle_manager") {
+            return String::new(); 
+        }
+
         if msg.contains("bringup.launch.py") { "Initializing Hardware Drivers...".to_string() }
         else if msg.contains("mapping.launch.py") { "Starting SLAM Toolbox Session...".to_string() }
-        else if msg.contains("cartographer.launch.py") { "Starting Google Cartographer SLAM...".to_string() }
         else if msg.contains("navigation.launch.py") { "Activating Nav2 Stack...".to_string() }
+        else if msg.contains("planner_server") && msg.contains("activating") { "Pathfinder Module: READY".to_string() }
+        else if msg.contains("controller_server") && msg.contains("activating") { "Pilot Module: READY".to_string() }
+        else if msg.contains("bt_navigator") && msg.contains("activating") { "Mission Manager: READY".to_string() }
+        else if msg.contains("map_server") && msg.contains("activating") { "Map Server: ONLINE".to_string() }
         else if msg.contains("teleop_twist_keyboard") { "Opening Teleop Terminal...".to_string() }
         else if msg.contains("map_saver_cli") { "Compressing & Saving Map Data...".to_string() }
         else if msg.contains("colcon build") { "Compiling Workspace Packages...".to_string() }
-        else if msg.contains("pkill -9 -f ros2") { "CRITICAL: PURGING ALL ROS2 PROCESSES...".to_string() }
+        else if msg.contains("pkill -9 -f") { "CRITICAL: PURGING PROCESSES...".to_string() }
         else { msg.to_string() }
     }
 
@@ -551,13 +582,9 @@ impl App {
                         self.operation_status = "BRINGUP".to_string();
                         self.spawn_ros_launch("bringup.launch.py");
                     },
-                    MenuItem::Mapping => {
+                    MenuItem::SlamToolbox => {
                         self.operation_status = "MAPPING".to_string();
                         self.spawn_ros_launch("mapping.launch.py");
-                    },
-                    MenuItem::Cartographer => {
-                        self.operation_status = "ADV_MAPPING".to_string();
-                        self.spawn_ros_launch("cartographer.launch.py");
                     },
                     MenuItem::Navigation => {
                         if self.available_maps.is_empty() {
@@ -565,21 +592,23 @@ impl App {
                             return;
                         }
                         self.operation_status = "NAVIGATION".to_string();
+                        self.is_loading = true;
+                        self.loading_message = "Initializing Nav2 Stack...".to_string();
                         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-                        let maps_path = format!("{}/titan_ws/src/titan_bringup/maps/", home);
+                        let maps_path = format!("{}/Project-TITAN/titan_ws/src/titan_bringup/maps/", home);
                         let map_file = format!("{}{}", maps_path, self.available_maps[self.map_selection_index]);
                         let map_arg = format!("map:={}", map_file);
                         self.spawn_ros_launch_with_args("navigation.launch.py", vec![&map_arg]);
                     },
                     MenuItem::LocalTeleop => {
                         let is_tmux = std::env::var("TMUX").is_ok();
-                        let speed = if self.teleop_speed.is_empty() { "0.2" } else { &self.teleop_speed };
-                        let turn = if self.teleop_turn.is_empty() { "0.8" } else { &self.teleop_turn };
+                        let speed = if self.teleop_speed.is_empty() { "0.15" } else { &self.teleop_speed };
+                        let turn = if self.teleop_turn.is_empty() { "0.5" } else { &self.teleop_turn };
                         let ros_args = format!("--ros-args -p speed:={} -p turn:={}", speed, turn);
                         
                         if is_tmux {
                             self.logs.push(format!("Spawning Teleop (s={}, t={}) in split...", speed, turn));
-                            let tmux_cmd = format!("ros2 run teleop_twist_keyboard teleop_twist_keyboard {}", ros_args);
+                            let tmux_cmd = format!("bash -c 'if [ -f ~/Project-TITAN/titan_ws/install/setup.bash ]; then source ~/Project-TITAN/titan_ws/install/setup.bash && ros2 run titan_bringup titan_teleop {}; else source /opt/ros/jazzy/setup.bash && python3 ~/Project-TITAN/titan_ws/src/titan_bringup/titan_bringup/titan_teleop.py {}; fi'", ros_args, ros_args);
                             let _ = Command::new("tmux")
                                 .args(["split-window", "-h", &tmux_cmd])
                                 .stdout(Stdio::null())
@@ -590,12 +619,12 @@ impl App {
                         }
                     },
                     MenuItem::RemoteTeleop => {
-                        let speed = if self.teleop_speed.is_empty() { "0.2" } else { &self.teleop_speed };
-                        let turn = if self.teleop_turn.is_empty() { "0.8" } else { &self.teleop_turn };
+                        let speed = if self.teleop_speed.is_empty() { "0.15" } else { &self.teleop_speed };
+                        let turn = if self.teleop_turn.is_empty() { "0.5" } else { &self.teleop_turn };
                         let ros_args = format!("--ros-args -p speed:={} -p turn:={}", speed, turn);
 
                         self.logs.push(format!("Spawning Remote Teleop (s={}, t={}) in new window...", speed, turn));
-                        let cmd_str = format!("gnome-terminal -- bash -c 'ros2 run teleop_twist_keyboard teleop_twist_keyboard {}; exec bash'", ros_args);
+                        let cmd_str = format!("x-terminal-emulator -e \"bash -c 'if [ -f ~/Project-TITAN/titan_ws/install/setup.bash ]; then source ~/Project-TITAN/titan_ws/install/setup.bash && ros2 run titan_bringup titan_teleop {}; else source /opt/ros/jazzy/setup.bash && python3 ~/Project-TITAN/titan_ws/src/titan_bringup/titan_bringup/titan_teleop.py {}; fi || {{ echo \\\"\\nProcess exited or crashed. Press Enter to close window...\\\"; read; }}'\"", ros_args, ros_args);
                         let _ = Command::new("bash")
                             .arg("-c")
                             .arg(cmd_str)
@@ -611,7 +640,7 @@ impl App {
                             self.available_rviz_configs[self.rviz_config_selection_index].clone()
                         };
                         self.logs.push(format!("Spawning Remote RViz with config: {}...", config_file));
-                        let cmd_str = format!("gnome-terminal -- bash -c 'LIBGL_ALWAYS_SOFTWARE=1 rviz2 -d ~/titan_ws/src/titan_bringup/rviz_config/{}; exec bash'", config_file);
+                        let cmd_str = format!("x-terminal-emulator -e \"bash -c 'source /opt/ros/jazzy/setup.bash && LIBGL_ALWAYS_SOFTWARE=1 rviz2 -d ~/Project-TITAN/titan_ws/src/titan_bringup/rviz_config/{} || {{ echo \\\"\\nRViz crashed or exited. Press Enter to close window...\\\"; read; }}'\"", config_file);
                         let _ = Command::new("bash")
                             .arg("-c")
                             .arg(cmd_str)
@@ -636,18 +665,28 @@ impl App {
                         self.loading_message = "Rebuilding Workspace...".to_string();
                         self.logs.push("Rebuilding...".to_string());
                         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
-                        let build_cmd = format!("cd {}/titan_ws && colcon build --symlink-install", home);
+                        let build_cmd = format!("cd {}/Project-TITAN/titan_ws && colcon build --symlink-install", home);
                         let output = Command::new("bash").arg("-c").arg(build_cmd).output();
                         self.handle_output(output, "Rebuild complete.");
                         self.is_loading = false;
                     },
                     MenuItem::KillAll => {
-                        self.logs.push(self.translate_log("pkill -9 -f ros2"));
-                        let kill_cmd = "pkill -9 -f ros2; pkill -9 -f ydlidar; pkill -9 -f slam_toolbox; pkill -9 -f arduino_bridge; ros2 daemon stop; ros2 daemon start";
+                        self.logs.push("Aggressive System Reset...".to_string());
+                        let kill_cmd = "pkill -9 -f 'ros|ydlidar|slam_toolbox|arduino_bridge|teleop'; ros2 daemon stop; sudo rm -f /var/lock/LCK..*; sleep 2; ros2 daemon start";
                         let _ = Command::new("bash").arg("-c").arg(kill_cmd).output();
-                        self.logs.push("Global Reset Complete.".to_string());
+                        self.logs.push("Global Reset Complete. Port locks cleared.".to_string());
                         self.operation_status = "IDLE".to_string();
                         self.active_process = None;
+                    },
+                    MenuItem::StartGui => {
+                        let home = std::env::var("HOME").unwrap_or_else(|_| "/home/pidev".to_string());
+                        self.logs.push("Launching Web GUI (npm run dev)...".to_string());
+                        let cmd_str = format!("x-terminal-emulator -e \"bash -c 'cd {}/Project-TITAN/titan_gui && npm run dev -- --host || {{ echo \\\"\\nGUI process exited. Press Enter to close...\\\"; read; }}'\"", home);
+                        let _ = Command::new("bash")
+                            .arg("-c")
+                            .arg(cmd_str)
+                            .spawn()
+                            .map(|child| self.active_process = Some(child));
                     },
                     _ => {}
                 }
@@ -661,11 +700,11 @@ impl App {
 
     fn spawn_ros_launch_with_args(&mut self, file: &str, args: Vec<&str>) {
         let args_str = args.join(" ");
-        let cmd_str = format!("source ~/titan_ws/install/setup.bash && ros2 launch titan_bringup {} {}", file, args_str);
+        let cmd_str = format!("source ~/Project-TITAN/titan_ws/install/setup.bash && ros2 launch titan_bringup {} {}", file, args_str);
 
         if self.device_type == DeviceType::Laptop {
             self.logs.push(format!("Laptop Mode: {} launching in new window...", file));
-            let terminal_cmd = format!("gnome-terminal -- bash -c \"{}; exec bash\"", cmd_str);
+            let terminal_cmd = format!("x-terminal-emulator -e \"bash -c '{} || {{ echo \\\"\\nLaunch failed. Press Enter to close window...\\\"; read; }}'\"", cmd_str);
             let _ = Command::new("bash")
                 .arg("-c")
                 .arg(&terminal_cmd)
@@ -678,12 +717,22 @@ impl App {
 
         let is_tmux = std::env::var("TMUX").is_ok();
         if is_tmux {
-            self.logs.push("Spawning in tmux split...".to_string());
-            let _ = Command::new("tmux")
-                .args(["split-window", "-h", &cmd_str])
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn();
+            // For Navigation (Nav2), we suppress the split jargon view in favor of the custom TUI loader
+            if file.contains("navigation.launch.py") {
+                 self.logs.push("Spawning Nav2 Stack (Background)...".to_string());
+                 let _ = Command::new("tmux")
+                    .args(["split-window", "-h", "-d", &cmd_str]) // -d spawns it but keeps focus on TUI
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .spawn();
+            } else {
+                self.logs.push("Spawning in tmux split...".to_string());
+                let _ = Command::new("tmux")
+                    .args(["split-window", "-h", &cmd_str])
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .spawn();
+            }
         } else {
             if self.active_process.is_some() {
                 if let Some(mut child) = self.active_process.take() {
@@ -1089,7 +1138,7 @@ async fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Enter => {
                             if !app.map_name_input.is_empty() {
                                 let name = app.map_name_input.clone();
-                                let path = format!("/home/pidev/titan_ws/src/titan_bringup/maps/{}", name);
+                                let path = format!("/home/pidev/Project-TITAN/titan_ws/src/titan_bringup/maps/{}", name);
                                 let output = Command::new("ros2")
                                     .args(["run", "nav2_map_server", "map_saver_cli", "-f", &path])
                                     .output();
@@ -1238,10 +1287,25 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 }
 
 fn render_loader(f: &mut ratatui::Frame, message: &str, frame: usize) {
-    let area = centered_rect(60, 20, f.size());
+    let area = centered_rect(50, 15, f.size());
     let frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"];
-    let text = vec![Line::from(format!(" {} {}", frames[frame % 8], message)), Line::from(" Please wait... ")];
-    let paragraph = Paragraph::new(text).block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::Yellow))).alignment(Alignment::Center);
+    let spinner = frames[frame % frames.len()];
+    
+    let text = vec![
+        Line::from(vec![
+            Span::styled(format!(" {} ", spinner), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+            Span::styled(message, Style::default().fg(Color::White)),
+        ]),
+        Line::from(Span::styled(" [ SYSTEM SPOOLING UP ] ", Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC))),
+    ];
+
+    let paragraph = Paragraph::new(text)
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Double)
+            .border_style(Style::default().fg(Color::Cyan)))
+        .alignment(Alignment::Center);
+
     f.render_widget(ratatui::widgets::Clear, area);
     f.render_widget(paragraph, area);
 }

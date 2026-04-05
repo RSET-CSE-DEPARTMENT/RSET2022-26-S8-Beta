@@ -62,26 +62,15 @@ A centralized repository for all final year project source codes and documentati
 
 ---
 
-### 🤖 Group 6: TITAN
-**Trash Interception and Termination Autonomous Navigator**
+### Group 6
+**Project:** [TITAN: Trash Interception and Termination Autonomous Navigator](https://github.com/GeorgeET15/RSET2022-26-S8-Beta/tree/main/Group%206%20TITAN%3A%20Trash%20Interception%20and%20Termination%20Autonomous%20Navigator)
+**Members:**
+- George Emmanuel Thomas (U2203098)
+- Essa P J (U2203089)
+- Kripa Sam Joseph (U2203130)
+- Liya Jacob (U2203134)
 
-> [!TIP]
-> **TITAN** is an autonomous system designed to navigate and intercept trash in aquatic or urban environments using ROS 2 and advanced sensor fusion.
-
-- **Project Link:** [TITAN Source Code](https://github.com/GeorgeET15/RSET2022-26-S8-Beta/tree/main/TITAN%3A%20Trash%20Interception%20and%20Termination%20Autonomous%20%20Navigator)
-- **Status:** 🟢 Final Report Uploaded
-- **Tech Stack:**
-  ![ROS 2](https://img.shields.io/badge/ros2-%2322314E.svg?style=flat&logo=ros&logoColor=white)
-  ![Python](https://img.shields.io/badge/python-3670A0?style=flat&logo=python&logoColor=ffdd54)
-  ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
-
-| Role | Name | ID |
-| :--- | :--- | :--- |
-| **Team Lead** | George Emmanuel Thomas | U2203098 |
-| **Member** | Essa P J | U2203089 |
-| **Member** | Kripa Sam Joseph | U2203130 |
-| **Member** | Liya Jacob | U2203134 |
-| **Guide** | **Dr. Jincy J. Fernandez** | - |
+**Guide:** Dr. Jincy J. Fernandez
 
 ---
 
