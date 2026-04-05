@@ -13,13 +13,6 @@ def generate_launch_description():
     slam_params = os.path.join(bringup_pkg, 'config', 'mapper_params_online_async.yaml')
 
  
-    bringup_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(bringup_pkg, 'launch', 'bringup.launch.py')
-        )
-    )
-
-    
     slam_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(slam_toolbox_pkg, 'launch', 'online_async_launch.py')
@@ -30,12 +23,6 @@ def generate_launch_description():
         }.items()
     )
 
-    delayed_slam = TimerAction(
-        period=5.0,
-        actions=[slam_launch]
-    )
-
     return LaunchDescription([
-        bringup_launch,
-        delayed_slam
+        slam_launch
     ])

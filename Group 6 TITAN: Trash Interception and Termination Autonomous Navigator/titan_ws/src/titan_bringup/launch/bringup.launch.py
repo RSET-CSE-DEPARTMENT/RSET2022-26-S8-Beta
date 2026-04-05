@@ -61,5 +61,21 @@ def generate_launch_description():
                 'wheel_base': 0.45,
                 'publish_tf': True
             }]
+        ),
+
+        # 7. ROS Web Bridge (For Consumer GUI)
+        Node(
+            package='rosbridge_server',
+            executable='rosbridge_websocket',
+            name='rosbridge_websocket',
+            output='screen'
+        ),
+
+        # 8. System Manager (For GUI Control)
+        Node(
+            package='titan_bringup',
+            executable='system_manager',
+            name='system_manager',
+            output='screen'
         )
     ])

@@ -28,6 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'arduino_bridge = titan_bringup.arduino_bridge_node:main',
+            'system_manager = titan_bringup.system_manager:main',
+            'titan_teleop = titan_bringup.titan_teleop:main',
         ],
     },
 )

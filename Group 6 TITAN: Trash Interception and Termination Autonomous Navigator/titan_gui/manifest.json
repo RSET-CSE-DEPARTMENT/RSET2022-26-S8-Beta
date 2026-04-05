@@ -1,0 +1,17 @@
+{
+  "name": "TITAN Mission Control",
+  "short_name": "TITAN",
+  "description": "Professional robot control interface for the TITAN platform.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0e12",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

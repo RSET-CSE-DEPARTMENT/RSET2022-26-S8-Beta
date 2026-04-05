@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>TRIDENT Mission Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.8);
+            --accent-color: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+        body { background-color: var(--bg-color); color: var(--text-primary); overflow: hidden; height: 100vh; width: 100vw; display: flex; flex-direction: column; touch-action: none; }
+
+        /* Header */
+        header { padding: 0.75rem 2rem; background: rgba(13, 14, 18, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: 2px; color: var(--text-primary); }
+        .logo span { color: var(--accent-color); }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.connected { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .status-dot.disconnected { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+
+        /* Orientation Prompt */
+        #orientation-prompt { position: fixed; inset: 0; background: var(--bg-color); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; }
+        .rotate-icon { width: 80px; height: 80px; border: 4px solid var(--accent-color); border-radius: 12px; margin-bottom: 2rem; position: relative; animation: rotateDevice 2s infinite alternate ease-in-out; }
+        .rotate-icon::after { content: ''; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; background: var(--accent-color); border-radius: 2px; }
+        @keyframes rotateDevice { 0% { transform: rotate(0deg); } 100% { transform: rotate(90deg); } }
+        .prompt-text { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .prompt-sub { font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* Main Controller Area */
+        main { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 1rem 6rem; background: radial-gradient(circle at center, #1e293b, #0f172a); gap: 4rem; }
+
+        /* DPAD Section */
+        .dpad-section { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px; width: 240px; height: 240px; }
+        .dpad-btn { width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(15px); border: 2px solid var(--glass-border); border-radius: 16px; color: white; font-size: 1.5rem; cursor: pointer; transition: 0.15s; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); touch-action: none; }
+        .dpad-btn:active, .dpad-btn.active { background: var(--accent-color); border-color: var(--accent-color); transform: scale(0.95); box-shadow: 0 0 20px var(--accent-color); }
+        .dpad-center { background: transparent; border: none; box-shadow: none; cursor: default; }
+        .dpad-center:active { background: transparent; transform: none; box-shadow: none; }
+
+        /* Controls Panel */
+        .controls-panel { display: flex; flex-direction: column; gap: 1.5rem; width: 320px; }
+        .control-group { background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 24px; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .label { font-size: 0.7rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Lift Buttons */
+        .lift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .btn { padding: 1.1rem 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: white; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 0.8rem; touch-action: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:active { background: var(--accent-color); transform: scale(0.95); box-shadow: 0 0 20px var(--accent-color); }
+        .btn-stop { background: var(--danger); border: none; grid-column: span 2; padding: 0.65rem; font-size: 0.7rem; }
+
+        /* Speed Slider */
+        .speed-row { display: flex; align-items: center; gap: 1rem; }
+        input[type=range] { flex: 1; height: 6px; border-radius: 3px; accent-color: var(--accent-color); cursor: pointer; touch-action: none; }
+        #speed-val { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--success); min-width: 50px; text-align: right; }
+
+        /* Orientation Logic */
+        @media (orientation: portrait) {
+            #orientation-prompt { display: flex; }
+            main { display: none; }
+            header { filter: blur(4px); pointer-events: none; }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            main { padding: 0.5rem 3rem; gap: 2rem; justify-content: space-between; }
+            .dpad { width: 180px; height: 180px; }
+            .controls-panel { width: 280px; gap: 0.75rem; }
+            .control-group { padding: 1rem; gap: 0.75rem; border-radius: 18px; }
+            header { padding: 0.5rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="orientation-prompt">
+        <div class="rotate-icon"></div>
+        <div class="prompt-text">Rotate Device</div>
+        <div class="prompt-sub">TRIDENT is only available in Landscape mode</div>
+    </div>
+
+    <header>
+        <div class="logo">TRIDENT</div>
+        <div class="status-badge">
+            <button id="retry-btn" title="Retry Connection" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.1rem; padding:4px; display:none; transition:0.2s;">↻</button>
+            <span id="ros-dot" class="status-dot disconnected"></span>
+            <span id="ros-text">DISCONNECTED</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="dpad-section">
+            <div class="dpad">
+                <div></div> <!-- Top Left -->
+                <button class="dpad-btn" id="move-up"><i data-lucide="chevron-up"></i></button>
+                <div></div> <!-- Top Right -->
+                <button class="dpad-btn" id="move-left"><i data-lucide="chevron-left"></i></button>
+                <div class="dpad-center"></div>
+                <button class="dpad-btn" id="move-right"><i data-lucide="chevron-right"></i></button>
+                <div></div> <!-- Bottom Left -->
+                <button class="dpad-btn" id="move-down"><i data-lucide="chevron-down"></i></button>
+                <div></div> <!-- Bottom Right -->
+            </div>
+            <p class="label">Directional Control</p>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <p class="label">Lifting System</p>
+                <div class="lift-grid">
+                    <button class="btn" id="lift-up"><i data-lucide="arrow-up-to-line" width="18" height="18"></i> UP</button>
+                    <button class="btn" id="lift-down"><i data-lucide="arrow-down-to-line" width="18" height="18"></i> DOWN</button>
+                    <button class="btn btn-stop" id="lift-stop"><i data-lucide="octagon-alert" width="16" height="16"></i> EMERGENCY STOP</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <p class="label">Drive Intensity (Limit 0.5)</p>
+                <div class="speed-row">
+                    <input type="range" id="speed-slider" min="0.1" max="0.5" step="0.05" value="0.15">
+                    <span id="speed-val">0.15</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- ROS CONNECTION ---
+        const ros = new ROSLIB.Ros({ url: 'ws://' + window.location.hostname + ':9090' });
+        const rosDot = document.getElementById('ros-dot');
+        const rosText = document.getElementById('ros-text');
+        const retryBtn = document.getElementById('retry-btn');
+
+        ros.on('connection', () => {
+            rosDot.className = 'status-dot connected';
+            rosText.innerText = 'ONLINE'; rosText.style.color = '#10b981';
+            retryBtn.style.display = 'none';
+        });
+
+        ros.on('error', () => {
+            rosDot.className = 'status-dot disconnected';
+            rosText.innerText = 'OFFLINE'; rosText.style.color = '#ef4444';
+            retryBtn.style.display = 'inline-block';
+        });
+
+        ros.on('close', () => {
+            rosDot.className = 'status-dot disconnected';
+            rosText.innerText = 'DISCONNECTED'; rosText.style.color = '#ef4444';
+            retryBtn.style.display = 'inline-block';
+        });
+
+        retryBtn.onclick = () => {
+            window.location.reload();
+        };
+
+        // --- TOPICS ---
+        const cmdVel = new ROSLIB.Topic({ ros, name: '/cmd_vel', messageType: 'geometry_msgs/msg/Twist' });
+        const liftCmd = new ROSLIB.Topic({ ros, name: '/aux_motor/cmd', messageType: 'std_msgs/msg/Int16' });
+
+        // --- SPEED CONTROL ---
+        let scale = 0.15;
+        const slider = document.getElementById('speed-slider');
+        const speedVal = document.getElementById('speed-val');
+        
+        slider.oninput = (e) => {
+            scale = parseFloat(e.target.value);
+            speedVal.innerText = scale.toFixed(2);
+        };
+
+        // --- DIRECTIONAL CONTROL (SMOOTHING) ---
+        let targetLinear = 0;
+        let targetAngular = 0;
+        let currentLinear = 0;
+        let currentAngular = 0;
+
+        setInterval(() => {
+            // Deceleration (0.2s stop time)
+            const decelLinear = 0.09; 
+            const decelAngular = 0.25;
+
+            // Instant Start / Smooth Stop
+            if (targetLinear !== 0) currentLinear = targetLinear;
+            else {
+                if (currentLinear < 0) currentLinear = Math.min(0, currentLinear + decelLinear);
+                else if (currentLinear > 0) currentLinear = Math.max(0, currentLinear - decelLinear);
+            }
+
+            if (targetAngular !== 0) currentAngular = targetAngular;
+            else {
+                if (currentAngular < 0) currentAngular = Math.min(0, currentAngular + decelAngular);
+                else if (currentAngular > 0) currentAngular = Math.max(0, currentAngular - decelAngular);
+            }
+
+            // Cleanup floating noise
+            if (Math.abs(currentLinear) < 0.001) currentLinear = 0;
+            if (Math.abs(currentAngular) < 0.001) currentAngular = 0;
+
+            // Publish
+            if (currentLinear !== 0 || currentAngular !== 0 || targetLinear !== 0 || targetAngular !== 0) {
+                cmdVel.publish(new ROSLIB.Message({
+                    linear: { x: currentLinear, y: 0, z: 0 },
+                    angular: { x: 0, y: 0, z: currentAngular }
+                }));
+            }
+        }, 50);
+
+        const startMoving = (linear, angular) => {
+            targetLinear = linear * scale;
+            targetAngular = angular * scale * 5;
+        };
+
+        const stopMoving = () => {
+            targetLinear = 0;
+            targetAngular = 0;
+        };
+
+        const setupMoveBtn = (id, lin, ang) => {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); startMoving(lin, ang); };
+            btn.onmousedown = start;
+            btn.ontouchstart = start;
+        };
+
+        setupMoveBtn('move-up', 1, 0);
+        setupMoveBtn('move-down', -1, 0);
+        setupMoveBtn('move-left', 0, 1);
+        setupMoveBtn('move-right', 0, -1);
+
+        // --- LIFT CONTROL ---
+        let liftInt = null;
+        let currentLift = 0;
+        const lift = (v) => {
+            clearInterval(liftInt);
+            if (v === 0 && currentLift === 0) return; // Do not publish redundant stops
+            currentLift = v;
+            const msg = new ROSLIB.Message({ data: v });
+            liftCmd.publish(msg);
+            if (v !== 0) liftInt = setInterval(() => liftCmd.publish(msg), 100);
+        };
+
+        const setupLiftBtn = (id, val) => {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); lift(val); };
+            btn.onmousedown = start;
+            btn.ontouchstart = start;
+        };
+
+        setupLiftBtn('lift-up', 255);
+        setupLiftBtn('lift-down', -255);
+        document.getElementById('lift-stop').onclick = () => lift(0);
+
+        // --- GLOBAL STOP HANDLER ---
+        const universalStop = () => {
+            stopMoving();
+            lift(0);
+        };
+
+        window.addEventListener('mouseup', universalStop);
+        window.addEventListener('touchend', universalStop);
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        // --- INIT ICONS ---
+        lucide.createIcons();
+    </script>
+</body>
+</html>
