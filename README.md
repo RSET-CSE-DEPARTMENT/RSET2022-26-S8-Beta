@@ -108,6 +108,21 @@ A centralized repository for all final year project source codes and documentati
 **Guide:** Ms. Jisha Mary Jose
 
 ---
+
+### Group 11
+**Project:** [QuietSOS Fall Detection and Alerting System](https://github.com/RSET-CSE-DEPARTMENT/RSET2022-26-S8-Beta/tree/main/Group%2011%20QuietSOS%20Fall%20Detection%20and%20Alerting%20System)
+
+**Members:**
+
+- Gokul Raj (U2203101)
+- Irene Ajith (U2203105)
+- Jefry Joseph (U2203111)
+- Jesel Gibi George (U2203112)
+
+**Guide:** Ms. Ann Grace Attokaren
+
+---
+
 ### Group 14
 **Project:** [Group 14 virtual try on for accessory](https://github.com/RSET-CSE-DEPARTMENT/RSET2022-26-S8-Beta/tree/main/Group%2010%20Silent%20Speech%20Recognition)
 **Members:**

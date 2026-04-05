@@ -1,0 +1,5 @@
+SocksPort 0.0.0.0:9050
+ControlPort 0.0.0.0:9051
+CookieAuthentication 1
+# Optional: increase Log notice (uncomment if you want logs)
+# Log notice stdout

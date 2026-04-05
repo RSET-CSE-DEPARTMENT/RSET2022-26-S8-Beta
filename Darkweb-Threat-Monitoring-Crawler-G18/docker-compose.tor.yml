@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  tor:
+    build:
+      context: ./tor
+      dockerfile: Dockerfile
+    image: local-tor:latest
+    container_name: project-tor
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./tor-data:/var/lib/tor
+      - ./tor/torrc:/etc/tor/torrc:ro
+    ports:
+      - "127.0.0.1:19050:9050"   # socks
+      - "127.0.0.1:19051:9051"   # control

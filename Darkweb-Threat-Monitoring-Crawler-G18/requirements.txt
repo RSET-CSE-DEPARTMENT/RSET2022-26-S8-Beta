@@ -1,0 +1,33 @@
+# --- Core ---
+requests==2.32.3
+urllib3==2.2.3
+beautifulsoup4==4.12.3
+soupsieve==2.5
+
+# --- Database ---
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+
+# --- FastAPI / API ---
+fastapi==0.115.0
+uvicorn==0.30.3
+
+# --- Redis (future features like task queue / caching) ---
+redis==5.0.8
+
+# --- Tor integration ---
+PySocks==1.7.1
+
+# --- Playwright (headless browser for JS-rendering dark web pages) ---
+playwright==1.46.0
+
+# --- Streamlit UI ---
+streamlit==1.37.1
+
+# --- Alembic (DB migrations) ---
+alembic==1.13.2
+
+# --- Optional utilities ---
+validators==0.23.2
+tldextract==5.1.3

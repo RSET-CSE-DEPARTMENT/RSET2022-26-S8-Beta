@@ -1,0 +1,26 @@
+# Python envs
+.venv/
+venv/
+ENV/
+env/
+# Bytecode
+__pycache__/
+*.pyc
+# Editor
+.vscode/
+# Local env
+.env
+# Generated/runtime data
+seeds/
+data/
+playwright/
+*.sqlite3
+*.db
+# mac/windows
+.DS_Store
+Thumbs.db
+# ML models
+models/
+*.pt
+*.bin
+*.pth
